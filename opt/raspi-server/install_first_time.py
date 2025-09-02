@@ -7,7 +7,7 @@ and only once (guarded by /var/lib/raspi-server/.installed).
 import os, json
 from datetime import datetime
 
-FLAG_DIR = "/var/lib/raspi-server"
+FLAG_DIR = "/raspi-server"
 DATA_FILE = os.path.join(FLAG_DIR, "data.json")
 
 def do_first_time_setup():
