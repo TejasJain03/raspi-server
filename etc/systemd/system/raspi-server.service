@@ -7,8 +7,8 @@ Type=simple
 WorkingDirectory=/opt/raspi-server
 ExecStart=/opt/raspi-server/venv/bin/python /opt/raspi-server/app.py
 Restart=always
-User=pi
-Group=pi
+User=anmaya-technology
+Group=anmaya-technology
 
 [Install]
 WantedBy=multi-user.target
