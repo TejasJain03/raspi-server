@@ -3,10 +3,22 @@ set -e
 
 echo "[INFO] Installing raspi-server..."
 
-# Install Python dependencies
-if [ -f /opt/raspi-server/requirements.txt ]; then
-    echo "[INFO] Installing Python requirements..."
-    pip3 install -r /opt/raspi-server/requirements.txt
+APP_DIR="/opt/raspi-server"
+VENV_DIR="$APP_DIR/venv"
+
+# Create virtual environment if not exists
+if [ ! -d "$VENV_DIR" ]; then
+    echo "[INFO] Creating virtual environment..."
+    python3 -m venv "$VENV_DIR"
+fi
+
+# Activate venv and install requirements
+if [ -f "$APP_DIR/requirements.txt" ]; then
+    echo "[INFO] Installing Python requirements inside virtualenv..."
+    source "$VENV_DIR/bin/activate"
+    pip install --upgrade pip
+    pip install -r "$APP_DIR/requirements.txt"
+    deactivate
 fi
 
 # Reload systemd
@@ -18,4 +30,4 @@ systemctl enable raspi-server.service
 # Start service
 systemctl start raspi-server.service
 
-echo "[INFO] raspi-server installed and running."
+echo "[INFO] raspi-server installed and running inside virtual environment."

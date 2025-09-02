@@ -1,13 +1,14 @@
 [Unit]
-Description=Raspberry Pi Server
+Description=Raspi Server
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /opt/raspi-server/app.py
+Type=simple
 WorkingDirectory=/opt/raspi-server
+ExecStart=/opt/raspi-server/venv/bin/python /opt/raspi-server/app.py
 Restart=always
 User=pi
-Environment=PYTHONUNBUFFERED=1
+Group=pi
 
 [Install]
 WantedBy=multi-user.target
