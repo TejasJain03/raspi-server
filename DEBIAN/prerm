@@ -1,11 +1,10 @@
 #!/bin/sh -e
 # prerm - runs before package removal/upgrade
 
-SERVICE="myflaskapp.service"
+SERVICE="raspi-server.service"
 
 case "$1" in
   remove|upgrade)
-    # stop/disable service before removal/upgrade
     if systemctl is-active --quiet "$SERVICE"; then
       systemctl stop "$SERVICE" || true
     fi

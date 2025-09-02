@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
-One-time initialization script. This is executed by the package
-postinst only once (guarded by /var/lib/myflaskapp/.installed).
-Place any setup logic here: seed DBs, create initial config, generate keys, etc.
+One-time initialization script. This runs during .deb install
+and only once (guarded by /var/lib/raspi-server/.installed).
 """
 
-import json
-import os
+import os, json
 from datetime import datetime
 
 FLAG_DIR = "/var/lib/raspi-server"
@@ -16,12 +14,12 @@ def do_first_time_setup():
     os.makedirs(FLAG_DIR, exist_ok=True)
     data = {
         "created_at": datetime.utcnow().isoformat() + "Z",
-        "welcome": "This was initialized during package installation.",
-        "example_setting": True
+        "message": "Raspberry Pi server initialized on first install",
+        "example": True
     }
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=2)
-    print("Wrote initial data to", DATA_FILE)
+    print("Initialization complete, data written to", DATA_FILE)
 
 if __name__ == "__main__":
     do_first_time_setup()
