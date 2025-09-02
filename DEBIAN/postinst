@@ -1,33 +1,41 @@
 #!/bin/bash
 set -e
 
-echo "[INFO] Installing raspi-server..."
-
 APP_DIR="/opt/raspi-server"
-VENV_DIR="$APP_DIR/venv"
+FLAG_DIR="/var/lib/raspi-server"
+FLAG_FILE="$FLAG_DIR/.installed"
+SERVICE="raspi-server.service"
+USER="anmaya-technology"
 
-# Create virtual environment if not exists
-if [ ! -d "$VENV_DIR" ]; then
-    echo "[INFO] Creating virtual environment..."
-    python3 -m venv "$VENV_DIR"
+if [ "$1" = "configure" ]; then
+    echo "[INFO] Installing Python dependencies..."
+    if [ -f "$APP_DIR/requirements.txt" ]; then
+        python3 -m venv "$APP_DIR/venv"
+        "$APP_DIR/venv/bin/pip" install --upgrade pip
+        "$APP_DIR/venv/bin/pip" install -r "$APP_DIR/requirements.txt"
+    fi
+
+    # Create system directory if missing
+    mkdir -p "$FLAG_DIR"
+    chown -R "$USER":"$USER" "$FLAG_DIR"
+
+    # Run one-time init
+    if [ ! -f "$FLAG_FILE" ]; then
+        echo "[INFO] Running first-time initialization..."
+        sudo -u "$USER" python3 "$APP_DIR/install_first_time.py"
+        touch "$FLAG_FILE"
+        chown "$USER":"$USER" "$FLAG_FILE"
+        echo "[INFO] First-time initialization complete."
+    else
+        echo "[INFO] First-time initialization already done, skipping."
+    fi
+
+    # Fix ownership of app directory
+    chown -R "$USER":"$USER" "$APP_DIR"
+
+    # Reload systemd, enable and start service
+    systemctl daemon-reload
+    systemctl enable --now "$SERVICE"
 fi
 
-# Activate venv and install requirements
-if [ -f "$APP_DIR/requirements.txt" ]; then
-    echo "[INFO] Installing Python requirements inside virtualenv..."
-    source "$VENV_DIR/bin/activate"
-    pip install --upgrade pip
-    pip install -r "$APP_DIR/requirements.txt"
-    deactivate
-fi
-
-# Reload systemd
-systemctl daemon-reload
-
-# Enable service
-systemctl enable raspi-server.service
-
-# Start service
-systemctl start raspi-server.service
-
-echo "[INFO] raspi-server installed and running inside virtual environment."
+exit 0
