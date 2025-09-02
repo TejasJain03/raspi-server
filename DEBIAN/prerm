@@ -1,0 +1,16 @@
+#!/bin/sh -e
+# prerm - runs before package removal/upgrade
+
+SERVICE="myflaskapp.service"
+
+case "$1" in
+  remove|upgrade)
+    # stop/disable service before removal/upgrade
+    if systemctl is-active --quiet "$SERVICE"; then
+      systemctl stop "$SERVICE" || true
+    fi
+    systemctl disable "$SERVICE" || true
+    ;;
+esac
+
+exit 0

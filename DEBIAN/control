@@ -1,0 +1,11 @@
+Package: myflaskapp
+Version: 1.0
+Section: web
+Priority: optional
+Architecture: all
+Essential: no
+Depends: python3, python3-pip, systemd
+Maintainer: Your Name <you@example.com>
+Description: Simple Flask app packaged as a .deb with systemd service.
+ A minimal example that installs a Flask app to /opt/myflaskapp and runs
+ a one-time initialization during package installation.

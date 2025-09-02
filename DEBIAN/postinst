@@ -1,0 +1,62 @@
+#!/bin/sh -e
+# postinst - runs after package is unpacked/configured
+# $1 is the dpkg action (e.g., "configure")
+
+# LOCATIONs
+APP_DIR="/opt/myflaskapp"
+FLAG_DIR="/var/lib/myflaskapp"
+FLAG_FILE="$FLAG_DIR/.installed"
+SERVICE="myflaskapp.service"
+USER="myflask"
+
+if [ "$1" = "configure" ]; then
+  # Ensure pip3 exists (package depends on python3-pip)
+  echo "Installing python dependencies..."
+  if [ -f "$APP_DIR/requirements.txt" ]; then
+    pip3 install -r "$APP_DIR/requirements.txt" || {
+      echo "pip3 install failed" >&2
+      exit 1
+    }
+  fi
+
+  # Create a system user for running the service (if not exists)
+  if ! id -u "$USER" >/dev/null 2>&1; then
+    echo "Creating system user $USER..."
+    adduser --system --no-create-home --group --disabled-login --quiet "$USER" || true
+  fi
+
+  # Make a place for data / flag
+  mkdir -p "$FLAG_DIR"
+  chown -R "$USER":"$USER" "$FLAG_DIR" || true
+
+  # Run one-time initialization only if flag absent
+  if [ ! -f "$FLAG_FILE" ]; then
+    echo "Running first-time initialization..."
+    # run the init script (it should be idempotent, but we guard with flag)
+    python3 "$APP_DIR/install_first_time.py" || {
+      echo "first-time init failed" >&2
+      # Depending on policy, we can either continue or fail; we'll fail.
+      exit 1
+    }
+    # mark as done
+    touch "$FLAG_FILE"
+    chown "$USER":"$USER" "$FLAG_FILE" || true
+    echo "First-time initialization completed."
+  else
+    echo "Initialization already done; skipping first-time steps."
+  fi
+
+  # Ensure /opt/myflaskapp files are owned by service user
+  chown -R "$USER":"$USER" "$APP_DIR" || true
+
+  # Reload systemd and enable/start the service
+  echo "Reloading systemd, enabling & starting service..."
+  systemctl daemon-reload || true
+  systemctl enable --now "$SERVICE" || {
+    echo "Failed to enable/start $SERVICE" >&2
+    exit 1
+  }
+
+fi
+
+exit 0
