@@ -1,15 +1,15 @@
-#!/bin/sh -e
-# prerm - runs before package removal/upgrade
+#!/bin/bash
+set -e
 
-SERVICE="raspi-server.service"
+echo "[INFO] Stopping raspi-server service..."
 
-case "$1" in
-  remove|upgrade)
-    if systemctl is-active --quiet "$SERVICE"; then
-      systemctl stop "$SERVICE" || true
-    fi
-    systemctl disable "$SERVICE" || true
-    ;;
-esac
+# Stop service if running
+systemctl stop raspi-server.service || true
 
-exit 0
+# Disable service
+systemctl disable raspi-server.service || true
+
+# Reload systemd
+systemctl daemon-reload
+
+echo "[INFO] raspi-server service removed."

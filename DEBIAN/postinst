@@ -1,49 +1,21 @@
-#!/bin/sh -e
-# postinst - runs after package is unpacked/configured
-# $1 is the dpkg action (e.g., "configure")
+#!/bin/bash
+set -e
 
-APP_DIR="/opt/raspi-server"
-FLAG_DIR="/var/lib/raspi-server"
-FLAG_FILE="$FLAG_DIR/.installed"
-SERVICE="raspi-server.service"
-USER="raspiserver"
+echo "[INFO] Installing raspi-server..."
 
-if [ "$1" = "configure" ]; then
-  echo "Installing python dependencies via apt..."
-  apt-get update
-  xargs -a "$APP_DIR/requirements.txt" -r apt-get install -y
-
-  # Create a system user if not already there
-  if ! id -u "$USER" >/dev/null 2>&1; then
-    echo "Creating system user $USER..."
-    adduser --system --no-create-home --group --disabled-login --quiet "$USER" || true
-  fi
-
-  mkdir -p "$FLAG_DIR"
-  chown -R "$USER":"$USER" "$FLAG_DIR" || true
-
-  # Run one-time init
-  if [ ! -f "$FLAG_FILE" ]; then
-    echo "Running first-time initialization..."
-    python3 "$APP_DIR/install_first_time.py" || {
-      echo "first-time init failed" >&2
-      exit 1
-    }
-    touch "$FLAG_FILE"
-    chown "$USER":"$USER" "$FLAG_FILE" || true
-    echo "First-time initialization completed."
-  else
-    echo "First-time initialization already done, skipping."
-  fi
-
-  chown -R "$USER":"$USER" "$APP_DIR" || true
-
-  echo "Reloading systemd, enabling & starting service..."
-  systemctl daemon-reload || true
-  systemctl enable --now "$SERVICE" || {
-    echo "Failed to enable/start $SERVICE" >&2
-    exit 1
-  }
+# Install Python dependencies
+if [ -f /opt/raspi-server/requirements.txt ]; then
+    echo "[INFO] Installing Python requirements..."
+    pip3 install -r /opt/raspi-server/requirements.txt
 fi
 
-exit 0
+# Reload systemd
+systemctl daemon-reload
+
+# Enable service
+systemctl enable raspi-server.service
+
+# Start service
+systemctl start raspi-server.service
+
+echo "[INFO] raspi-server installed and running."

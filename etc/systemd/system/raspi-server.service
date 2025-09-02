@@ -1,18 +1,13 @@
 [Unit]
-Description=Raspberry Pi Flask Server
+Description=Raspberry Pi Server
 After=network.target
 
 [Service]
-Type=simple
-User=raspiserver
-Group=raspiserver
-WorkingDirectory=/opt/raspi-server
 ExecStart=/usr/bin/python3 /opt/raspi-server/app.py
-Restart=on-failure
-RestartSec=5
-StandardOutput=syslog
-StandardError=syslog
-SyslogIdentifier=raspi-server
+WorkingDirectory=/opt/raspi-server
+Restart=always
+User=pi
+Environment=PYTHONUNBUFFERED=1
 
 [Install]
 WantedBy=multi-user.target
