@@ -9,13 +9,9 @@ SERVICE="raspi-server.service"
 USER="raspiserver"
 
 if [ "$1" = "configure" ]; then
-  echo "Installing python dependencies..."
-  if [ -f "$APP_DIR/requirements.txt" ]; then
-    pip3 install -r "$APP_DIR/requirements.txt" || {
-      echo "pip3 install failed" >&2
-      exit 1
-    }
-  fi
+  echo "Installing python dependencies via apt..."
+  apt-get update
+  xargs -a "$APP_DIR/requirements.txt" -r apt-get install -y
 
   # Create a system user if not already there
   if ! id -u "$USER" >/dev/null 2>&1; then
