@@ -1,35 +1,21 @@
-#!/usr/bin/env python3
-"""
-One-time initialization script for raspi-server.
-Creates /var/lib/raspi-server/data.json (only installation date)
-and registers device info in Firestore.
-"""
-
 import os, json, random, string
 from datetime import datetime
-import firebase_admin
-from firebase_admin import credentials, firestore
+from config import config, ENVIRONMENT  # import config system
 
-# Fixed path without environment condition
 FLAG_DIR = "/var/lib/raspi-server"
 DATA_FILE = os.path.join(FLAG_DIR, "data.json")
 
-# Firestore init (ensure you have GOOGLE_APPLICATION_CREDENTIALS set)
-if not firebase_admin._apps:
-    cred = credentials.ApplicationDefault()
-    firebase_admin.initialize_app(cred)
-db = firestore.client()
 
 def generate_device_id(length=7):
     """Generate random alphanumeric device ID"""
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
 
 def do_first_time_setup():
     os.makedirs(FLAG_DIR, exist_ok=True)
 
     # Only create file if it doesn’t exist
     if not os.path.exists(DATA_FILE):
-        # Save first install date
         install_data = {
             "installed_at": datetime.utcnow().isoformat() + "Z"
         }
@@ -38,7 +24,14 @@ def do_first_time_setup():
 
         print(f"Initialization complete, data written to {DATA_FILE}")
 
-        # Firestore device registration
+        # ✅ Initialize Firebase using config
+        app_config = config.get(ENVIRONMENT)
+        app_config.init_firebase()
+
+        from firebase_admin import firestore
+        db = firestore.client()
+
+        # Register in Firestore
         device_id = generate_device_id()
         device_data = {
             "device_ID": device_id,
@@ -53,6 +46,7 @@ def do_first_time_setup():
 
     else:
         print(f"{DATA_FILE} already exists, skipping initialization")
+
 
 if __name__ == "__main__":
     do_first_time_setup()
