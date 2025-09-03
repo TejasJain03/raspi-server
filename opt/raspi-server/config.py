@@ -4,18 +4,27 @@ from dotenv import load_dotenv
 import firebase_admin
 from firebase_admin import credentials
 
-# Step 1: Load .env to know which environment is active
-load_dotenv()
+# Base directory where this file lives (i.e., /opt/raspi-server)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Step 1: Load .env (default selector)
+dotenv_path = os.path.join(BASE_DIR, ".env")
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
+else:
+    raise FileNotFoundError(f"Base .env file not found at {dotenv_path}")
+
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
 
-# Step 2: Load environment-specific file
-env_file = f".env.{ENVIRONMENT}"
+# Step 2: Load environment-specific file (.env.development, .env.production)
+env_file = os.path.join(BASE_DIR, f".env.{ENVIRONMENT}")
 
 if os.path.exists(env_file):
     load_dotenv(env_file, override=True)
     print(f"✅ Loaded environment variables from {env_file}")
 else:
     raise FileNotFoundError(f"Environment file {env_file} not found")
+
 
 class Config:
     """Base configuration"""
