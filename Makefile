@@ -1,6 +1,6 @@
 PACKAGE_NAME = raspi-server
 VERSION = 1.0
-DIR = $(PACKAGE_NAME)-$(VERSION)
+DIR = $(PACKAGE_NAME)
 DEBIAN_DIR = $(DIR)/DEBIAN
 
 .PHONY: all build clean package install
