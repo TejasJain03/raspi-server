@@ -10,15 +10,8 @@ from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-# Pick environment
-ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
-
-# Path selection
-if ENVIRONMENT == "production":
-    FLAG_DIR = "/var/lib/raspi-server"
-else:
-    FLAG_DIR = "/dev/raspi-server"
-
+# Fixed path without environment condition
+FLAG_DIR = "/var/lib/raspi-server"
 DATA_FILE = os.path.join(FLAG_DIR, "data.json")
 
 # Firestore init (ensure you have GOOGLE_APPLICATION_CREDENTIALS set)
