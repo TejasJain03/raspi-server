@@ -10,19 +10,43 @@ USER="anmaya-technology"
 if [ "$1" = "configure" ]; then
     echo "[INFO] Installing Python dependencies..."
     if [ -f "$APP_DIR/requirements.txt" ]; then
-        python3 -m venv "$APP_DIR/venv"
+        if [ ! -d "$APP_DIR/venv" ]; then
+            echo "[INFO] Creating virtual environment..."
+            python3 -m venv "$APP_DIR/venv"
+        else
+            echo "[INFO] Virtual environment already exists, skipping creation."
+        fi
         "$APP_DIR/venv/bin/pip" install --upgrade pip
         "$APP_DIR/venv/bin/pip" install -r "$APP_DIR/requirements.txt"
+    else
+        echo "[WARN] requirements.txt not found, skipping dependency installation."
     fi
 
     # Create system directory if missing
     mkdir -p "$FLAG_DIR"
     chown -R "$USER":"$USER" "$FLAG_DIR"
 
+    # Ensure environment files exist
+    if [ ! -f "$APP_DIR/.env" ]; then
+        echo "[INFO] Creating default environment files..."
+        cat <<EOF > "$APP_DIR/.env"
+ENVIRONMENT=development
+EOF
+        cat <<EOF > "$APP_DIR/.env.development"
+FIREBASE_SERVICE_ACCOUNT_PATH=/home/$USER/.gcloud/anmayaedtech-dev.json
+SECRET_KEY=dev_secret
+EOF
+        cat <<EOF > "$APP_DIR/.env.production"
+FIREBASE_SERVICE_ACCOUNT_PATH=/home/$USER/.gcloud/edtech-203ac.json
+SECRET_KEY=prod_secret
+EOF
+        chown "$USER":"$USER" "$APP_DIR"/.env*
+    fi
+
     # Run one-time init
     if [ ! -f "$FLAG_FILE" ]; then
         echo "[INFO] Running first-time initialization..."
-        sudo -u "$USER" "$APP_DIR/venv/bin/python" "$APP_DIR/install_first_time.py"
+        runuser -u "$USER" -- "$APP_DIR/venv/bin/python" "$APP_DIR/install_first_time.py"
         touch "$FLAG_FILE"
         chown "$USER":"$USER" "$FLAG_FILE"
         echo "[INFO] First-time initialization complete."
@@ -34,6 +58,7 @@ if [ "$1" = "configure" ]; then
     chown -R "$USER":"$USER" "$APP_DIR"
 
     # Reload systemd, enable and start service
+    echo "[INFO] Enabling and starting systemd service..."
     systemctl daemon-reload
     systemctl enable --now "$SERVICE"
 fi
