@@ -1,4 +1,4 @@
-PACKAGE_NAME = myflaskapp
+PACKAGE_NAME = raspi-server
 VERSION = 1.0
 DIR = $(PACKAGE_NAME)-$(VERSION)
 DEBIAN_DIR = $(DIR)/DEBIAN

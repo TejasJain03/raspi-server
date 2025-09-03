@@ -1,31 +1,63 @@
 #!/usr/bin/env python3
 """
 One-time initialization script for raspi-server.
-Creates /var/lib/raspi-server/data.json safely.
+Creates /var/lib/raspi-server/data.json (only installation date)
+and registers device info in Firestore.
 """
 
-import os, json
+import os, json, random, string
 from datetime import datetime
+import firebase_admin
+from firebase_admin import credentials, firestore
 
-FLAG_DIR = "/var/lib/raspi-server"
+# Pick environment
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
+
+# Path selection
+if ENVIRONMENT == "production":
+    FLAG_DIR = "/var/lib/raspi-server"
+else:
+    FLAG_DIR = "/dev/raspi-server"
+
 DATA_FILE = os.path.join(FLAG_DIR, "data.json")
 
-def do_first_time_setup():
-    # Create directory with correct permissions
-    os.makedirs(FLAG_DIR, exist_ok=True)
-    
-    # Prepare initial data
-    data = {
-        "created_at": datetime.utcnow().isoformat() + "Z",
-        "message": "Raspberry Pi server initialized on first install",
-        "example": True
-    }
+# Firestore init (ensure you have GOOGLE_APPLICATION_CREDENTIALS set)
+if not firebase_admin._apps:
+    cred = credentials.ApplicationDefault()
+    firebase_admin.initialize_app(cred)
+db = firestore.client()
 
-    # Only write file if it doesn’t exist
+def generate_device_id(length=7):
+    """Generate random alphanumeric device ID"""
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+def do_first_time_setup():
+    os.makedirs(FLAG_DIR, exist_ok=True)
+
+    # Only create file if it doesn’t exist
     if not os.path.exists(DATA_FILE):
+        # Save first install date
+        install_data = {
+            "installed_at": datetime.utcnow().isoformat() + "Z"
+        }
         with open(DATA_FILE, "w") as f:
-            json.dump(data, f, indent=2)
+            json.dump(install_data, f, indent=2)
+
         print(f"Initialization complete, data written to {DATA_FILE}")
+
+        # Firestore device registration
+        device_id = generate_device_id()
+        device_data = {
+            "device_ID": device_id,
+            "status": "active",
+            "assigned_status": "free",
+            "location": random.choice(["college", "universal", str(random.randint(100,999))]),
+            "created_at": datetime.utcnow().isoformat() + "Z"
+        }
+
+        db.collection("devices").document(device_id).set(device_data)
+        print(f"Device registered in Firestore with ID {device_id}")
+
     else:
         print(f"{DATA_FILE} already exists, skipping initialization")
 
