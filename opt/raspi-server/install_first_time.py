@@ -23,38 +23,30 @@ def log_and_store(message: str, data: dict):
 def do_first_time_setup():
     os.makedirs(FLAG_DIR, exist_ok=True)
 
+
     install_data = {}
-    if os.path.exists(DATA_FILE):
-        # load existing data (so we don’t overwrite logs)
-        with open(DATA_FILE, "r") as f:
-            install_data = json.load(f)
+    install_data["installed_at"] = datetime.utcnow().isoformat() + "Z"
+    log_and_store(f"Initialization complete, data written to {DATA_FILE}", install_data)
 
-    if "installed_at" not in install_data:
-        install_data["installed_at"] = datetime.utcnow().isoformat() + "Z"
-        log_and_store(f"Initialization complete, data written to {DATA_FILE}", install_data)
+    # ✅ Initialize Firebase using config
+    app_config = config.get(ENVIRONMENT)
+    app_config.init_firebase()
 
-        # ✅ Initialize Firebase using config
-        app_config = config.get(ENVIRONMENT)
-        app_config.init_firebase()
+    from firebase_admin import firestore
+    db = firestore.client()
 
-        from firebase_admin import firestore
-        db = firestore.client()
+    # Register in Firestore
+    device_id = generate_device_id()
+    device_data = {
+        "device_ID": device_id,
+        "status": "active",
+        "assigned_status": "free",
+        "location": random.choice(["college", "universal", str(random.randint(100, 999))]),
+        "created_at": datetime.utcnow().isoformat() + "Z"
+    }
 
-        # Register in Firestore
-        device_id = generate_device_id()
-        device_data = {
-            "device_ID": device_id,
-            "status": "active",
-            "assigned_status": "free",
-            "location": random.choice(["college", "universal", str(random.randint(100, 999))]),
-            "created_at": datetime.utcnow().isoformat() + "Z"
-        }
-
-        db.collection("devices").document(device_id).set(device_data)
-        log_and_store(f"Device registered in Firestore with ID {device_id}", install_data)
-
-    else:
-        log_and_store(f"{DATA_FILE} already exists, skipping initialization", install_data)
+    db.collection("devices").document(device_id).set(device_data)
+    log_and_store(f"Device registered in Firestore with ID {device_id}", install_data)
 
     # Save back to file
     with open(DATA_FILE, "w") as f:
