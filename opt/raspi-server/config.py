@@ -10,6 +10,7 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
 
 # Step 2: Load environment-specific file
 env_file = f".env.{ENVIRONMENT}"
+
 if os.path.exists(env_file):
     load_dotenv(env_file, override=True)
     print(f"✅ Loaded environment variables from {env_file}")
