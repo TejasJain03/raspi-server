@@ -22,7 +22,7 @@ if [ "$1" = "configure" ]; then
     # Run one-time init
     if [ ! -f "$FLAG_FILE" ]; then
         echo "[INFO] Running first-time initialization..."
-        sudo -u "$USER" python3 "$APP_DIR/install_first_time.py"
+        sudo -u "$USER" "$APP_DIR/venv/bin/python" "$APP_DIR/install_first_time.py"
         touch "$FLAG_FILE"
         chown "$USER":"$USER" "$FLAG_FILE"
         echo "[INFO] First-time initialization complete."
