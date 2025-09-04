@@ -2,3 +2,4 @@ Flask==2.3.3
 python-dotenv==1.0.0
 firebase-admin==6.2.0
 gunicorn
+paho-mqtt==1.6.1
