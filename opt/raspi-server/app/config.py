@@ -5,14 +5,15 @@ import firebase_admin
 from firebase_admin import credentials
 
 # Base directory where this file lives (i.e., /opt/raspi-server)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Step 1: Load .env (default selector)
 dotenv_path = os.path.join(BASE_DIR, ".env")
 if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path)
+    print(f"✅ Loaded base environment variables from {dotenv_path}")
 else:
-    raise FileNotFoundError(f"Base .env file not found at {dotenv_path}")
+    print(f"⚠️  Base .env file not found at {dotenv_path}, using system environment variables")
 
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
 
@@ -23,7 +24,7 @@ if os.path.exists(env_file):
     load_dotenv(env_file, override=True)
     print(f"✅ Loaded environment variables from {env_file}")
 else:
-    raise FileNotFoundError(f"Environment file {env_file} not found")
+    print(f"⚠️  Environment file {env_file} not found, using default configuration")
 
 
 class Config:
@@ -31,6 +32,12 @@ class Config:
 
     SECRET_KEY = os.environ.get("SECRET_KEY")
     FIREBASE_SERVICE_ACCOUNT_PATH = os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH")
+    
+    # MQTT configuration
+    MQTT_BROKER = os.environ.get("MQTT_BROKER")
+    MQTT_PORT = os.environ.get("MQTT_PORT", "1883")  # Default MQTT port
+    MQTT_USER = os.environ.get("MQTT_USER")
+    MQTT_PASS = os.environ.get("MQTT_PASS")
 
     @staticmethod
     def init_firebase():
